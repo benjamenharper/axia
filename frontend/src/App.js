@@ -91,37 +91,25 @@ function App() {
     setError(null);
 
     try {
-      console.log('Sending search request:', { query: queryToUse });
-      const response = await axios.post('http://localhost:8000/api/search', {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/search`, {
         query: queryToUse
       }, {
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         }
       });
       
       console.log('Received response:', response.data);
       
-      if (response.data && response.data.results) {
-        console.log('Search summary:', response.data.search_summary);
-        console.log('Location overview:', response.data.location_overview);
-        
-        setResults({
-          properties: response.data.results,
-          static_page_url: response.data.static_page_url,
-          search_summary: response.data.search_summary,
-          location_overview: response.data.location_overview
-        });
-        
-        if (response.data.results.length === 0) {
-          setError('No properties found for your search criteria');
-        } else {
-          // Save search with static page URL
-          saveSearch(queryToUse, response.data.static_page_url);
-        }
-      } else {
-        setError('No results found');
-      }
+      setResults(response.data);
+      
+      // Add to recent searches
+      const newSearch = {
+        query: queryToUse,
+        timestamp: new Date().toISOString(),
+        staticPageUrl: response.data.static_page_url
+      };
+      saveSearch(newSearch.query, newSearch.staticPageUrl);
     } catch (err) {
       console.error('Search error:', err);
       const errorMessage = err.response?.data?.detail || err.message || 'An error occurred while searching';
