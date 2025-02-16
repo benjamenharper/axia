@@ -38,7 +38,11 @@ app = FastAPI()
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",  # Local development
+        "https://axia.vercel.app",  # Production frontend
+        "https://axia-git-main-benjamenharper.vercel.app"  # Preview deployments
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
