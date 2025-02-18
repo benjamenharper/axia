@@ -34,7 +34,12 @@ import { marked } from 'marked';
 
 function App() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [results, setResults] = useState({ properties: [], static_page_url: null, search_summary: null, location_overview: null });
+  const [results, setResults] = useState({
+    properties: [],
+    static_page_url: null,
+    search_summary: null,
+    location_overview: null
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [recentSearches, setRecentSearches] = useState([]);
@@ -216,25 +221,25 @@ function App() {
               )}
 
               {/* Results Display */}
-              {results.search_summary && (
+              {(results?.search_summary || '') && (
                 <Box p={4} bg="white" _dark={{ bg: 'gray.700' }} borderRadius="lg">
                   <Text fontSize="lg" fontWeight="bold">Search Summary</Text>
                   <Text mt={2}>{results.search_summary}</Text>
                 </Box>
               )}
 
-              {results.location_overview && (
+              {(results?.location_overview || '') && (
                 <Box p={4} bg="white" _dark={{ bg: 'gray.700' }} borderRadius="lg">
                   <Text fontSize="lg" fontWeight="bold">Location Overview</Text>
                   <div
                     dangerouslySetInnerHTML={{
-                      __html: marked(results.location_overview),
+                      __html: marked(results.location_overview || ''),
                     }}
                   />
                 </Box>
               )}
 
-              {results.properties.length > 0 && (
+              {(results?.properties?.length > 0) && (
                 <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
                   {results.properties.map((property, index) => (
                     <Box
@@ -245,10 +250,10 @@ function App() {
                       bg="white"
                       _dark={{ bg: 'gray.700' }}
                     >
-                      {property.image_url && (
+                      {property?.image_url && (
                         <Image
                           src={property.image_url}
-                          alt={property.title}
+                          alt={property.title || 'Property'}
                           height="200px"
                           width="100%"
                           objectFit="cover"
@@ -257,32 +262,34 @@ function App() {
                       <Box p={4}>
                         <Box mb={2}>
                           <Text fontSize="xl" fontWeight="semibold" noOfLines={2}>
-                            {property.title}
+                            {property?.title || 'No Title Available'}
                           </Text>
                           <Text fontSize="2xl" color="blue.500" fontWeight="bold">
-                            ${property.price.toLocaleString()}
+                            ${(property?.price || 0).toLocaleString()}
                           </Text>
                         </Box>
                         <Text color="gray.500" mb={4} noOfLines={2}>
-                          {property.location}
+                          {property?.location || 'Location not available'}
                         </Text>
                         <Text noOfLines={3} mb={4}>
-                          {property.summary}
+                          {property?.summary || 'No description available'}
                         </Text>
                         <Wrap spacing={2} mb={4}>
-                          {property.features.map((feature, idx) => (
+                          {(property?.features || []).map((feature, idx) => (
                             <WrapItem key={idx}>
                               <Badge colorScheme="blue">{feature}</Badge>
                             </WrapItem>
                           ))}
                         </Wrap>
-                        <Link
-                          href={`${process.env.REACT_APP_API_URL}${results.static_page_url}`}
-                          isExternal
-                          color="blue.500"
-                        >
-                          View Details <Icon as={ChakraExternalLinkIcon} mx="2px" />
-                        </Link>
+                        {results?.static_page_url && (
+                          <Link
+                            href={`${process.env.REACT_APP_API_URL}${results.static_page_url}`}
+                            isExternal
+                            color="blue.500"
+                          >
+                            View Details <Icon as={ChakraExternalLinkIcon} mx="2px" />
+                          </Link>
+                        )}
                       </Box>
                     </Box>
                   ))}
