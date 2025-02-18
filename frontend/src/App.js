@@ -41,11 +41,10 @@ function App() {
   const toast = useToast();
   
   const bgColor = useColorModeValue('gray.50', 'gray.900');
+  const headerBg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
-  const sidebarBg = useColorModeValue('white', 'gray.800');
 
   useEffect(() => {
-    // Load recent searches from localStorage on component mount
     const savedSearches = localStorage.getItem('recentSearches');
     if (savedSearches) {
       setRecentSearches(JSON.parse(savedSearches));
@@ -63,10 +62,8 @@ function App() {
 
   const handleRecentSearchClick = (search) => {
     if (search.staticPageUrl) {
-      // Open the static page in a new tab
-      window.open(`http://localhost:8000${search.staticPageUrl}`, '_blank');
+      window.open(`${process.env.REACT_APP_API_URL}${search.staticPageUrl}`, '_blank');
     } else {
-      // Fallback to rerunning the search if no static page URL exists
       setSearchQuery(search.query);
       handleSubmit(null, search.query);
     }
@@ -99,11 +96,8 @@ function App() {
         }
       });
       
-      console.log('Received response:', response.data);
-      
       setResults(response.data);
       
-      // Add to recent searches
       const newSearch = {
         query: queryToUse,
         timestamp: new Date().toISOString(),
@@ -128,220 +122,183 @@ function App() {
 
   return (
     <ChakraProvider>
-      <Flex h="100vh" bg={bgColor}>
-        {/* Left Sidebar */}
-        <Box
-          w="300px"
-          bg={sidebarBg}
-          p={4}
-          borderRight="1px"
-          borderColor={borderColor}
-          position="relative"
-          zIndex="1"
-        >
-          <VStack spacing={6} align="stretch">
-            {/* Site Title */}
-            <Box>
-              <Heading
-                size="lg"
-                bgGradient="linear(to-r, blue.600, blue.400)"
-                bgClip="text"
-                letterSpacing="tight"
-                fontWeight="bold"
-              >
-                Axia
-              </Heading>
-              <Text color="gray.500" fontSize="sm" fontWeight="medium">
-                AI Real Estate Search
-              </Text>
-            </Box>
-
-            {/* Search Form */}
-            <Box>
-              <form onSubmit={handleSubmit} style={{ width: '100%' }}>
-                <FormControl isInvalid={!!error}>
-                  <Input
-                    placeholder="Search properties..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    size="md"
-                    borderRadius="md"
-                    bg="white"
-                    _focus={{
-                      boxShadow: 'outline',
-                      borderColor: 'blue.500',
-                    }}
-                  />
-                  <Button
-                    type="submit"
-                    colorScheme="blue"
-                    size="md"
-                    width="full"
-                    mt={2}
-                    isLoading={loading}
-                    loadingText="Searching..."
-                  >
-                    Search
-                  </Button>
-                  {error && (
-                    <Alert status="error" mt={2} size="sm">
-                      <AlertIcon />
-                      <AlertDescription fontSize="sm">
-                        {error}
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                </FormControl>
-              </form>
-            </Box>
-            
-            {/* Recent Searches */}
-            <Box>
-              <Text fontWeight="bold" color="gray.500" fontSize="sm" mb={2}>
-                Recent Searches
-              </Text>
-              <VStack spacing={2} align="stretch">
-                {recentSearches.slice(0, 5).map((search, index) => {
-                  const displayQuery = search.query
-                    .split(' ')
-                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                    .join(' ');
-                  
-                  return (
-                    <Button
-                      key={index}
-                      variant="ghost"
-                      justifyContent="flex-start"
-                      leftIcon={search.staticPageUrl ? <ChakraExternalLinkIcon /> : <TimeIcon />}
-                      onClick={() => handleRecentSearchClick(search)}
-                      whiteSpace="normal"
-                      textAlign="left"
-                      h="auto"
-                      py={2}
-                      px={3}
-                      _hover={{
-                        bg: 'blue.50',
-                      }}
-                    >
-                      <VStack align="start" spacing={1} width="100%">
-                        <Text fontSize="sm" fontWeight="medium" color="blue.600" noOfLines={2}>
-                          {displayQuery}
-                        </Text>
-                        <Text fontSize="xs" color="gray.500">
-                          {new Date(search.timestamp).toLocaleString()}
-                        </Text>
-                      </VStack>
-                    </Button>
-                  );
-                })}
-                {recentSearches.length === 0 && (
-                  <Text fontSize="sm" color="gray.500" textAlign="center" py={4}>
-                    No recent searches
-                  </Text>
-                )}
-              </VStack>
-            </Box>
-          </VStack>
+      <Flex direction="column" minH="100vh" bg={bgColor}>
+        {/* Header */}
+        <Box bg={headerBg} py={4} px={8} borderBottom="1px" borderColor={borderColor}>
+          <Flex justify="space-between" align="center" maxW="1200px" mx="auto">
+            <Heading
+              size="lg"
+              bgGradient="linear(to-r, blue.600, blue.400)"
+              bgClip="text"
+              letterSpacing="tight"
+              fontWeight="bold"
+            >
+              AXIA Real Estate
+            </Heading>
+            <Button leftIcon={<AddIcon />} colorScheme="blue" onClick={handleNewSearch}>
+              New Search
+            </Button>
+          </Flex>
         </Box>
 
-        {/* Main Content Area */}
-        <Box flex="1" p={8} bg="white">
-          {loading ? (
-            <Center h="100%">
-              <Spinner size="xl" color="blue.500" thickness="4px" />
-            </Center>
-          ) : (
-            <VStack spacing={6} align="stretch">
-              {results.search_summary && (
+        {/* Main Content */}
+        <Box flex="1" py={8}>
+          <Container maxW="1200px">
+            <VStack spacing={8} align="stretch">
+              {/* Search Form */}
+              <form onSubmit={handleSubmit}>
+                <FormControl>
+                  <Input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Describe your ideal property... (e.g., 'Find me a 3 bedroom house in Seattle under $800,000')"
+                    size="lg"
+                    bg="white"
+                    _dark={{ bg: 'gray.700' }}
+                  />
+                  <Button
+                    mt={4}
+                    colorScheme="blue"
+                    isLoading={loading}
+                    type="submit"
+                    width="full"
+                  >
+                    Search Properties
+                  </Button>
+                </FormControl>
+              </form>
+
+              {/* Recent Searches */}
+              {recentSearches.length > 0 && !results.properties.length && (
                 <Box>
-                  <Heading size="md" mb={2}>Search Results</Heading>
-                  <Text color="gray.600">{results.search_summary}</Text>
+                  <Text fontSize="lg" fontWeight="bold" mb={4}>Recent Searches</Text>
+                  <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
+                    {recentSearches.map((search, index) => (
+                      <Box
+                        key={index}
+                        p={4}
+                        bg="white"
+                        _dark={{ bg: 'gray.700' }}
+                        borderRadius="lg"
+                        cursor="pointer"
+                        onClick={() => handleRecentSearchClick(search)}
+                        _hover={{ shadow: 'md' }}
+                      >
+                        <Text noOfLines={2}>{search.query}</Text>
+                        <Flex align="center" mt={2} color="gray.500">
+                          <TimeIcon mr={2} />
+                          <Text fontSize="sm">
+                            {new Date(search.timestamp).toLocaleDateString()}
+                          </Text>
+                        </Flex>
+                      </Box>
+                    ))}
+                  </SimpleGrid>
                 </Box>
               )}
-              
+
+              {/* Error Display */}
+              {error && (
+                <Alert status="error">
+                  <AlertIcon />
+                  <Box>
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                  </Box>
+                </Alert>
+              )}
+
+              {/* Loading State */}
+              {loading && (
+                <Center p={8}>
+                  <Spinner size="xl" />
+                </Center>
+              )}
+
+              {/* Results Display */}
+              {results.search_summary && (
+                <Box p={4} bg="white" _dark={{ bg: 'gray.700' }} borderRadius="lg">
+                  <Text fontSize="lg" fontWeight="bold">Search Summary</Text>
+                  <Text mt={2}>{results.search_summary}</Text>
+                </Box>
+              )}
+
               {results.location_overview && (
-                <Box>
-                  <Heading size="md" mb={2}>Location Overview</Heading>
-                  <Box
+                <Box p={4} bg="white" _dark={{ bg: 'gray.700' }} borderRadius="lg">
+                  <Text fontSize="lg" fontWeight="bold">Location Overview</Text>
+                  <div
                     dangerouslySetInnerHTML={{
-                      __html: marked.parse(results.location_overview)
-                    }}
-                    sx={{
-                      'h1, h2, h3': {
-                        fontSize: 'lg',
-                        fontWeight: 'bold',
-                        mt: 4,
-                        mb: 2,
-                        color: 'gray.700'
-                      },
-                      'p': {
-                        mb: 3,
-                        color: 'gray.600',
-                        lineHeight: 'tall'
-                      },
-                      'ul, ol': {
-                        pl: 4,
-                        mb: 3,
-                        color: 'gray.600'
-                      },
-                      'li': {
-                        mb: 1
-                      }
+                      __html: marked(results.location_overview),
                     }}
                   />
                 </Box>
               )}
 
-              {results.properties && results.properties.length > 0 && (
+              {results.properties.length > 0 && (
                 <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
-                  {results.properties.map((property) => (
+                  {results.properties.map((property, index) => (
                     <Box
-                      key={property.id}
+                      key={index}
                       borderWidth="1px"
                       borderRadius="lg"
                       overflow="hidden"
                       bg="white"
-                      shadow="md"
+                      _dark={{ bg: 'gray.700' }}
                     >
-                      <Image
-                        src={property.image_url}
-                        alt={property.title}
-                        h="200px"
-                        w="full"
-                        objectFit="cover"
-                        fallback={
-                          <Center h="200px" bg="gray.100">
-                            <Text color="gray.500">No image available</Text>
-                          </Center>
-                        }
-                      />
+                      {property.image_url && (
+                        <Image
+                          src={property.image_url}
+                          alt={property.title}
+                          height="200px"
+                          width="100%"
+                          objectFit="cover"
+                        />
+                      )}
                       <Box p={4}>
-                        <Heading size="md" mb={2}>
-                          {property.title}
-                        </Heading>
-                        <Text color="blue.600" fontSize="2xl" mb={2}>
-                          ${property.price.toLocaleString()}
-                        </Text>
-                        <Text color="gray.500" mb={2}>
+                        <Box mb={2}>
+                          <Text fontSize="xl" fontWeight="semibold" noOfLines={2}>
+                            {property.title}
+                          </Text>
+                          <Text fontSize="2xl" color="blue.500" fontWeight="bold">
+                            ${property.price.toLocaleString()}
+                          </Text>
+                        </Box>
+                        <Text color="gray.500" mb={4} noOfLines={2}>
                           {property.location}
                         </Text>
-                        <Text mb={2}>{property.summary}</Text>
-                        {property.features && property.features.length > 0 && (
-                          <Wrap spacing={2} mt={2}>
-                            {property.features.map((feature, index) => (
-                              <WrapItem key={index}>
-                                <Badge colorScheme="blue">{feature}</Badge>
-                              </WrapItem>
-                            ))}
-                          </Wrap>
-                        )}
+                        <Text noOfLines={3} mb={4}>
+                          {property.summary}
+                        </Text>
+                        <Wrap spacing={2} mb={4}>
+                          {property.features.map((feature, idx) => (
+                            <WrapItem key={idx}>
+                              <Badge colorScheme="blue">{feature}</Badge>
+                            </WrapItem>
+                          ))}
+                        </Wrap>
+                        <Link
+                          href={`${process.env.REACT_APP_API_URL}${results.static_page_url}`}
+                          isExternal
+                          color="blue.500"
+                        >
+                          View Details <Icon as={ChakraExternalLinkIcon} mx="2px" />
+                        </Link>
                       </Box>
                     </Box>
                   ))}
                 </SimpleGrid>
               )}
             </VStack>
-          )}
+          </Container>
+        </Box>
+
+        {/* Footer */}
+        <Box bg={headerBg} py={4} borderTop="1px" borderColor={borderColor}>
+          <Container maxW="1200px">
+            <Text textAlign="center" color="gray.500">
+              2024 AXIA Real Estate. All rights reserved.
+            </Text>
+          </Container>
         </Box>
       </Flex>
     </ChakraProvider>
