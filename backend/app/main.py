@@ -38,15 +38,26 @@ app = FastAPI()
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  # Local development
-        "https://axia.vercel.app",  # Production frontend
-        "https://axia-git-main-benjamenharper.vercel.app"  # Preview deployments
-    ],
+    allow_origins=["*"],  # In production, replace with your frontend domain
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Configure error handling
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request, exc):
+    return {"detail": str(exc.detail), "status_code": exc.status_code}
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request, exc):
+    logger.error(f"Unexpected error: {str(exc)}")
+    return {"detail": "Internal server error", "status_code": 500}
+
+# Health check endpoint
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
 
 # Configure static files
 app.mount("/static", StaticFiles(directory="static_pages"), name="static")
