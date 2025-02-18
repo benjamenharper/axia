@@ -448,7 +448,7 @@ async def search_properties(request: SearchRequest):
             if not properties:
                 logger.warning("No properties found")
                 return {
-                    "results": [],
+                    "properties": [],
                     "static_page_url": None,
                     "search_summary": search_summary,
                     "location_overview": location_overview
@@ -463,7 +463,7 @@ async def search_properties(request: SearchRequest):
                 static_page_url = None
             
             return {
-                "results": properties,
+                "properties": properties,
                 "static_page_url": static_page_url,
                 "search_summary": search_summary,
                 "location_overview": location_overview

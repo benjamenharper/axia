@@ -92,14 +92,24 @@ function App() {
     setLoading(true);
     setError(null);
 
+    const apiUrl = `${process.env.REACT_APP_API_URL}/api/search`;
+    console.log('Attempting API call to:', apiUrl);
+
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/search`, {
+      const response = await axios.post(apiUrl, {
         query: queryToUse
       }, {
         headers: {
           'Content-Type': 'application/json',
-        }
+        },
+        timeout: 30000, // 30 second timeout
       });
+      
+      console.log('API Response:', response.data);
+      
+      if (!response.data || typeof response.data !== 'object') {
+        throw new Error('Invalid response format from API');
+      }
       
       setResults(response.data);
       
@@ -110,8 +120,25 @@ function App() {
       };
       saveSearch(newSearch.query, newSearch.staticPageUrl);
     } catch (err) {
-      console.error('Search error:', err);
-      const errorMessage = err.response?.data?.detail || err.message || 'An error occurred while searching';
+      console.error('Search error details:', {
+        message: err.message,
+        response: err.response,
+        request: err.request,
+        config: err.config
+      });
+      
+      let errorMessage;
+      if (err.response) {
+        // Server responded with error
+        errorMessage = err.response.data?.detail || err.response.data?.message || `Server error: ${err.response.status}`;
+      } else if (err.request) {
+        // Request made but no response
+        errorMessage = 'No response from server. Please check your internet connection.';
+      } else {
+        // Error in request setup
+        errorMessage = 'Error setting up the request. Please try again.';
+      }
+      
       setError(errorMessage);
       toast({
         title: 'Error',
