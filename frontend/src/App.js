@@ -106,7 +106,7 @@ function App() {
     setError(null);
 
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/search`, {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/search`, {
         query: queryToUse
       }, {
         headers: {
