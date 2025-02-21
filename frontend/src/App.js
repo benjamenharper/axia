@@ -45,20 +45,30 @@ function App() {
   const sidebarBg = useColorModeValue('white', 'gray.800');
 
   useEffect(() => {
-    // Load recent searches from localStorage on component mount
-    const savedSearches = localStorage.getItem('recentSearches');
-    if (savedSearches) {
-      setRecentSearches(JSON.parse(savedSearches));
+    try {
+      // Load recent searches from localStorage on component mount
+      const savedSearches = localStorage.getItem('recentSearches');
+      if (savedSearches) {
+        setRecentSearches(JSON.parse(savedSearches));
+      }
+    } catch (error) {
+      console.warn('Failed to load recent searches:', error);
+      // Continue without recent searches if localStorage is not available
     }
   }, []);
 
   const saveSearch = (query, staticPageUrl, timestamp = new Date().toISOString()) => {
-    const newSearches = [
-      { query, staticPageUrl, timestamp },
-      ...recentSearches.filter(s => s.query !== query).slice(0, 9)
-    ];
-    setRecentSearches(newSearches);
-    localStorage.setItem('recentSearches', JSON.stringify(newSearches));
+    try {
+      const newSearches = [
+        { query, staticPageUrl, timestamp },
+        ...recentSearches.filter(s => s.query !== query).slice(0, 9)
+      ];
+      setRecentSearches(newSearches);
+      localStorage.setItem('recentSearches', JSON.stringify(newSearches));
+    } catch (error) {
+      console.warn('Failed to save recent search:', error);
+      // Continue without saving if localStorage is not available
+    }
   };
 
   const handleRecentSearchClick = (search) => {
@@ -83,7 +93,12 @@ function App() {
     const queryToUse = overrideQuery || searchQuery;
     
     if (!queryToUse.trim()) {
-      setError('Please enter a search query');
+      toast({
+        title: "Please enter a search query",
+        status: "warning",
+        duration: 3000,
+        isClosable: true,
+      });
       return;
     }
 
@@ -110,14 +125,14 @@ function App() {
         staticPageUrl: response.data.static_page_url
       };
       saveSearch(newSearch.query, newSearch.staticPageUrl);
-    } catch (err) {
-      console.error('Search error:', err);
-      const errorMessage = err.response?.data?.detail || err.message || 'An error occurred while searching';
+    } catch (error) {
+      console.error('Search error:', error);
+      const errorMessage = error.response?.data?.detail || error.message || 'An error occurred while searching';
       setError(errorMessage);
       toast({
-        title: 'Error',
-        description: errorMessage,
-        status: 'error',
+        title: "Search Error",
+        description: error.response?.data?.detail || 'An error occurred while searching. Please try again.',
+        status: "error",
         duration: 5000,
         isClosable: true,
       });
