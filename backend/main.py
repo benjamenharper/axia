@@ -41,12 +41,18 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",  # Local development
         "https://axia.vercel.app",  # Production frontend
-        "https://axia-git-main-benjamenharper.vercel.app"  # Preview deployments
+        "https://axia-git-main-benjamenharper.vercel.app",  # Preview deployments
+        "*"  # Allow all origins temporarily for debugging
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {"status": "healthy"}
 
 # Configure static files
 app.mount("/static", StaticFiles(directory="static_pages"), name="static")
