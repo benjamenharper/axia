@@ -116,6 +116,17 @@ function App() {
       
       console.log('Received response:', response.data);
       
+      if (response.data.results && response.data.results.length === 0) {
+        setError('No properties found matching your search criteria.');
+        toast({
+          title: "No Results",
+          description: "No properties found matching your search criteria. Try adjusting your search.",
+          status: "info",
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+      
       setResults(response.data);
       
       // Add to recent searches
@@ -131,7 +142,7 @@ function App() {
       setError(errorMessage);
       toast({
         title: "Search Error",
-        description: error.response?.data?.detail || 'An error occurred while searching. Please try again.',
+        description: errorMessage,
         status: "error",
         duration: 5000,
         isClosable: true,

@@ -325,16 +325,15 @@ def search_zillow(location: str, min_price: Optional[str] = None, max_price: Opt
         
         try:
             results = response.json()
+            logger.info(f"Zillow API raw response: {results}")
         except json.JSONDecodeError as e:
             logger.error(f"JSON decode error: {str(e)}")
             logger.error(f"Raw response text: {response.text}")
             raise HTTPException(status_code=500, detail="Invalid response format from Zillow API")
         
-        logger.info(f"Zillow API raw response: {results}")
-        
         if not isinstance(results, dict):
             logger.error(f"Unexpected response type from Zillow API: {type(results)}")
-            raise ValueError(f"Invalid response type from Zillow API: {type(results)}")
+            raise HTTPException(status_code=500, detail=f"Invalid response type from Zillow API: {type(results)}")
         
         # Check for API-level errors
         if "error" in results:
@@ -346,7 +345,8 @@ def search_zillow(location: str, min_price: Optional[str] = None, max_price: Opt
         properties_data = results.get("props", results.get("results", []))
         if not properties_data:
             logger.warning(f"No properties found for location: {location}")
-            return []
+            logger.warning(f"Full response: {results}")
+            raise HTTPException(status_code=404, detail=f"No properties found in {location}")
         
         properties = []
         for prop in properties_data:
