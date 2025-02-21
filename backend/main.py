@@ -134,14 +134,16 @@ def extract_search_params(query: str) -> dict:
     logger.info(f"Extracted location: {criteria['location']}")
     
     # Extract property type
-    if "land" in query_lower or "lot" in query_lower:
-        criteria["property_type"] = "LAND"
-    elif "condo" in query_lower:
+    if "condo" in query_lower or "condominium" in query_lower:
         criteria["property_type"] = "CONDO"
-    elif "townhouse" in query_lower or "town house" in query_lower:
+    elif "townhouse" in query_lower or "town house" in query_lower or "townhome" in query_lower:
         criteria["property_type"] = "TOWNHOUSE"
-    elif "multi" in query_lower or "multi-family" in query_lower:
+    elif "multi" in query_lower or "multi-family" in query_lower or "multifamily" in query_lower:
         criteria["property_type"] = "MULTI_FAMILY"
+    elif "land" in query_lower or "lot" in query_lower:
+        criteria["property_type"] = "LAND"
+    else:
+        criteria["property_type"] = "SINGLE_FAMILY"
     
     # Extract price range
     price_patterns = [
@@ -266,11 +268,11 @@ def search_zillow(location: str, min_price: Optional[str] = None, max_price: Opt
 
         # Map our property types to Zillow's property types
         property_type_map = {
-            "SINGLE_FAMILY": "Houses",
-            "CONDO": "Condos",
-            "TOWNHOUSE": "Townhomes",
-            "MULTI_FAMILY": "Multi-family",
-            "LAND": "Lots_Land"  # Updated to correct Zillow property type
+            "SINGLE_FAMILY": "SingleFamily",
+            "CONDO": "Condo",
+            "TOWNHOUSE": "Townhouse",
+            "MULTI_FAMILY": "MultiFamily",
+            "LAND": "LotLand"
         }
 
         zillow_property_type = property_type_map.get(property_type)
@@ -280,19 +282,20 @@ def search_zillow(location: str, min_price: Optional[str] = None, max_price: Opt
         params = {
             "location": location,
             "status_type": "ForSale",
-            "sort": "Price_High_Low"
+            "sort": "Price_High_Low",
+            "page": "1"
         }
 
         # Only add home_type if we have a valid mapping
         if zillow_property_type:
-            params["home_type"] = zillow_property_type
-            logger.info(f"Added home_type filter: {zillow_property_type}")
+            params["homeType"] = zillow_property_type
+            logger.info(f"Added homeType filter: {zillow_property_type}")
         
         # Add price filters if specified
         if min_price:
-            params["price_min"] = min_price
+            params["minPrice"] = min_price
         if max_price:
-            params["price_max"] = max_price
+            params["maxPrice"] = max_price
 
         headers = {
             "X-RapidAPI-Key": ZILLOW_API_KEY,
